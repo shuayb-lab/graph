@@ -69,40 +69,52 @@
       },
     });
 
-    // Prompt the user for input
-    const xAxisName = prompt('Enter x-axis name:');
-    const yAxisName = prompt('Enter y-axis name:');
-    const coordinatesInput = prompt('Enter coordinates (comma-separated x,y values):');
+    // Function to add coordinates
+    const addCoordinates = async () => {
+      // Prompt the user for input
+      const xAxisName = prompt('Enter x-axis name:');
+      const yAxisName = prompt('Enter y-axis name:');
+      const coordinatesInput = prompt('Enter coordinates (comma-separated x,y values):');
 
-    // Convert input strings to arrays
-    const coordinates = coordinatesInput.split(',').map(coord => parseFloat(coord));
+      // Check if the user canceled the input
+      if (xAxisName === null || yAxisName === null || coordinatesInput === null) {
+        return;
+      }
 
-    // Add coordinates to the chart
-    myChart.data.labels = coordinates.filter((_, index) => index % 2 === 0);
-    myChart.data.datasets[0].data = coordinates.filter((_, index) => index % 2 !== 0);
-    myChart.update();
+      // Convert input strings to arrays
+      const coordinates = coordinatesInput.split(',').map(coord => parseFloat(coord));
 
-    // Store coordinates in Firebase
-    const coordinatesCollection = collection(db, 'coordinates');
+      // Add coordinates to the chart
+      myChart.data.labels = coordinates.filter((_, index) => index % 2 === 0);
+      myChart.data.datasets[0].data = coordinates.filter((_, index) => index % 2 !== 0);
+      myChart.update();
 
-    addDoc(coordinatesCollection, {
-      xAxisName: xAxisName,
-      yAxisName: yAxisName,
-      coordinates: coordinates,
-    })
-    .then((docRef) => {
-      console.log("Coordinates added with ID: ", docRef.id);
-    })
-    .catch((error) => {
-      console.error("Error adding coordinates: ", error);
-    });
+      // Store coordinates in Firebase
+      const coordinatesCollection = collection(db, 'coordinates');
 
-    // Retrieve and log coordinates from Firebase
-    getDocs(coordinatesCollection).then((querySnapshot) => {
+      try {
+        const docRef = await addDoc(coordinatesCollection, {
+          xAxisName: xAxisName,
+          yAxisName: yAxisName,
+          coordinates: coordinates,
+        });
+        console.log("Coordinates added with ID: ", docRef.id);
+      } catch (error) {
+        console.error("Error adding coordinates: ", error);
+      }
+
+      // Retrieve and log coordinates from Firebase
+      const querySnapshot = await getDocs(coordinatesCollection);
       querySnapshot.forEach((doc) => {
         console.log(doc.id, " => ", doc.data());
       });
-    });
+
+      // Recursively call the function to add more coordinates
+      addCoordinates();
+    };
+
+    // Start the process to add coordinates
+    addCoordinates();
   </script>
 </body>
 </html>
