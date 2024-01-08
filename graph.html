@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Chart Example</title>
+  <script type="module">
+    // Import the functions you need from the SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_jpa7_RhC1bxAlGFZ_39Z4V2eWLMZ2cU",
+      authDomain: "futuregraph-ab092.firebaseapp.com",
+      projectId: "futuregraph-ab092",
+      storageBucket: "futuregraph-ab092.appspot.com",
+      messagingSenderId: "312421752508",
+      appId: "1:312421752508:web:646697ae28391d0683bab9",
+      measurementId: "G-P4BZC7ZTDT"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <canvas id="myChart" width="400" height="200"></canvas>
+  <script type="module">
+    // Get the canvas element
+    const ctx = document.getElementById('myChart').getContext('2d');
+
+    // Create the chart
+    const myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        // Sample data (replace this with your actual data)
+        labels: [],
+        datasets: [{
+          label: 'Price of Milk',
+          data: [],
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 2,
+          fill: false,
+        }],
+      },
+      options: {
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            title: {
+              display: true,
+              text: 'Days',
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Price',
+            },
+          },
+        },
+      },
+    });
+
+    // Prompt the user for input
+    const xAxisName = prompt('Enter x-axis name:');
+    const yAxisName = prompt('Enter y-axis name:');
+    const coordinatesInput = prompt('Enter coordinates (comma-separated x,y values):');
+
+    // Convert input strings to arrays
+    const coordinates = coordinatesInput.split(',').map(coord => parseFloat(coord));
+
+    // Add coordinates to the chart
+    myChart.data.labels = coordinates.filter((_, index) => index % 2 === 0);
+    myChart.data.datasets[0].data = coordinates.filter((_, index) => index % 2 !== 0);
+    myChart.update();
+
+    // Store coordinates in Firebase
+    const coordinatesCollection = collection(db, 'coordinates');
+
+    addDoc(coordinatesCollection, {
+      xAxisName: xAxisName,
+      yAxisName: yAxisName,
+      coordinates: coordinates,
+    })
+    .then((docRef) => {
+      console.log("Coordinates added with ID: ", docRef.id);
+    })
+    .catch((error) => {
+      console.error("Error adding coordinates: ", error);
+    });
+
+    // Retrieve and log coordinates from Firebase
+    getDocs(coordinatesCollection).then((querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        console.log(doc.id, " => ", doc.data());
+      });
+    });
+  </script>
+</body>
+</html>
